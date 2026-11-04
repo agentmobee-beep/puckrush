@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>PuckRush — Clear Your Side First! | MegaSave Games</title>
 <meta name="description" content="Play PuckRush free in your browser: sling all your pucks to the other side before the rival clears theirs. No download, no sign-up.">
+<meta name="theme-color" content="#0b0e17">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PuckRush">
 <style>
   :root{ --bg:#0b0e17; --panel:#141926; --line:#232c44; --txt:#eef1f8; --mut:#98a2b8;
          --acc:#ff5a3c; --acc2:#ff9a3c; --blue:#3c8bff; }
@@ -46,6 +54,33 @@
   .adslot .cap{ font-size:9.5px; letter-spacing:1.6px; color:#5b6480; margin-bottom:4px; text-transform:uppercase; }
   footer{ color:#5b6480; font-size:12px; padding:14px 10px 26px; text-align:center; }
   footer a{ color:var(--mut); }
+  .actions{ width:100%; display:flex; gap:8px; margin:0 0 10px; }
+  .actbtn{ flex:1; background:var(--panel); border:1px solid var(--line); color:var(--txt); font-weight:700; font-size:14px; padding:11px 6px; border-radius:12px; cursor:pointer; }
+  .actbtn:active{ transform:scale(.97); }
+  #btn-install{ background:linear-gradient(90deg,var(--acc),var(--acc2)); border:0; color:#fff; box-shadow:0 8px 20px rgba(255,90,60,.30); }
+  #end-rank{ color:var(--acc2); font-weight:700; }
+  .panel{ position:fixed; inset:0; z-index:60; background:rgba(4,6,11,.72); display:flex; align-items:flex-end; justify-content:center; }
+  .sheet{ background:var(--panel); border:1px solid var(--line); border-bottom:0; border-radius:18px 18px 0 0; width:100%; max-width:520px; max-height:88vh; overflow-y:auto; padding:16px 16px 26px; }
+  .sheet-top{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .tabs{ display:flex; gap:8px; }
+  .tabbtn{ background:transparent; border:1px solid var(--line); color:var(--mut); font-weight:800; font-size:14px; padding:8px 14px; border-radius:999px; cursor:pointer; }
+  .tabbtn.on{ background:linear-gradient(90deg,var(--acc),var(--acc2)); color:#fff; border-color:transparent; }
+  #btn-close-panel{ background:transparent; border:1px solid var(--line); color:var(--txt); width:36px; height:36px; border-radius:50%; font-size:16px; cursor:pointer; flex:none; }
+  .nameline{ display:flex; gap:8px; align-items:center; margin:6px 0 12px; }
+  .nameline label{ font-size:13px; color:var(--mut); white-space:nowrap; }
+  .nameline input{ flex:1; background:#0d1220; border:1px solid var(--line); border-radius:10px; color:var(--txt); font-size:15px; padding:9px 11px; min-width:0; }
+  .nameline button{ background:var(--panel); border:1px solid var(--line); color:var(--txt); font-weight:700; border-radius:10px; padding:9px 14px; cursor:pointer; }
+  .statgrid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .stat{ background:#0d1220; border:1px solid var(--line); border-radius:12px; padding:11px 12px; text-align:center; }
+  .stat .k{ font-size:10.5px; color:var(--mut); text-transform:uppercase; letter-spacing:.8px; }
+  .stat .v{ font-size:21px; font-weight:800; margin-top:2px; }
+  .lb-note{ color:var(--mut); font-size:13px; margin:4px 0 10px; line-height:1.45; }
+  .lbrow{ display:flex; align-items:center; gap:10px; padding:9px 10px; border:1px solid var(--line); border-radius:11px; margin-bottom:7px; background:#0d1220; font-size:14.5px; }
+  .lbrow .rk{ font-weight:900; width:34px; text-align:center; flex:none; }
+  .lbrow .nm{ flex:1; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .lbrow .tm{ font-weight:800; color:var(--acc2); }
+  .lbrow .wn{ color:var(--mut); font-size:12.5px; }
+  .lbrow.me{ border-color:var(--acc2); box-shadow:0 0 0 1px var(--acc2) inset; }
   .ad-banner-desktop{ display:none; }
   @media (min-width:760px){ .ad-banner-mobile{ display:none; } .ad-banner-desktop{ display:block; } }
 </style>
@@ -64,6 +99,12 @@
     <div class="box"><div class="k">Your pucks</div><div class="v red" id="hud-you">5</div></div>
   </div>
 
+  <div class="actions">
+    <button class="actbtn hidden" id="btn-install">📲 Get the app</button>
+    <button class="actbtn" id="btn-card">🏆 My scorecard</button>
+    <button class="actbtn" id="btn-board">🌍 Leaderboard</button>
+  </div>
+
   <div id="wrap">
     <canvas id="game" width="720" height="1040"></canvas>
 
@@ -77,8 +118,10 @@
       <h1 id="end-title">🏆 You win!</h1>
       <div class="score-big" id="end-score">0</div>
       <p id="end-line">Score</p>
+      <p id="end-rank"></p>
       <button class="bigbtn" id="btn-again">↻ Play again</button>
       <button class="ghostbtn" id="btn-share">Share my score</button>
+      <button class="ghostbtn" id="btn-end-board">🌍 World leaderboard</button>
       <div class="adslot">
         <div class="cap">Advertisement</div>
         <script type="text/javascript">
@@ -115,6 +158,38 @@
     </ul>
   </div>
 </main>
+
+<div class="panel hidden" id="panel">
+  <div class="sheet">
+    <div class="sheet-top">
+      <div class="tabs">
+        <button class="tabbtn on" id="tab-card">🏆 Scorecard</button>
+        <button class="tabbtn" id="tab-board">🌍 World</button>
+      </div>
+      <button id="btn-close-panel" title="Close">✕</button>
+    </div>
+    <div id="pane-card">
+      <div class="nameline">
+        <label for="inp-name">Your name</label>
+        <input id="inp-name" maxlength="20" autocomplete="off">
+        <button id="btn-name">Save</button>
+      </div>
+      <div class="statgrid">
+        <div class="stat"><div class="k">Games played</div><div class="v" id="st-games">0</div></div>
+        <div class="stat"><div class="k">Wins</div><div class="v" id="st-wins">0</div></div>
+        <div class="stat"><div class="k">Win rate</div><div class="v" id="st-rate">—</div></div>
+        <div class="stat"><div class="k">Best clear</div><div class="v" id="st-best">—</div></div>
+        <div class="stat"><div class="k">Best score</div><div class="v" id="st-score">—</div></div>
+        <div class="stat"><div class="k">Best streak</div><div class="v" id="st-streak">0</div></div>
+      </div>
+      <p class="lb-note">Your scorecard lives on this device. Your wins also appear on the world leaderboard under your name.</p>
+    </div>
+    <div id="pane-board" class="hidden">
+      <p class="lb-note" id="lb-status">Fastest clears from players around the world.</p>
+      <div id="lb-list"></div>
+    </div>
+  </div>
+</div>
 
 <footer>
   PuckRush is a free browser game from <a href="https://ytdown-vpe5.onrender.com">MegaSave</a> — the free video downloader for YouTube, TikTok, Instagram &amp; 1,000+ sites.
@@ -361,6 +436,7 @@
       var best = +(localStorage.getItem('puckrush_best')||0);
       if (score>best){ localStorage.setItem('puckrush_best', score); }
     }catch(e){}
+    try{ if (window.__prFinish) window.__prFinish(won, Math.round(elapsed), score, shots); }catch(e){}
     if (won){ burst(); sWin(); setTimeout(function(){ if (over) ovEnd.classList.remove('hidden'); }, 950); }
     else { sLose(); ovEnd.classList.remove('hidden'); }
   }
@@ -377,11 +453,14 @@
     ctx.strokeRect(7,7,W-14,H-14);
     ctx.strokeStyle = 'rgba(122,84,38,0.45)'; ctx.lineWidth = 2;
     ctx.strokeRect(13,13,W-26,H-26);
-    // middle wall (dark walnut, brass gate posts)
-    ctx.fillStyle = '#c9a566';
+    // middle wall (dark brown so players can spot the line easily, dark gate posts)
+    ctx.fillStyle = '#5a3a1c';
     ctx.fillRect(10, MID-WALL/2, W/2-GATE/2-10, WALL);
     ctx.fillRect(W/2+GATE/2, MID-WALL/2, W/2-GATE/2-10, WALL);
-    ctx.fillStyle = '#8a6a38';
+    ctx.fillStyle = '#33200e';
+    ctx.fillRect(10, MID-WALL/2, W/2-GATE/2-10, 3); ctx.fillRect(10, MID+WALL/2-3, W/2-GATE/2-10, 3);
+    ctx.fillRect(W/2+GATE/2, MID-WALL/2, W/2-GATE/2-10, 3); ctx.fillRect(W/2+GATE/2, MID+WALL/2-3, W/2-GATE/2-10, 3);
+    ctx.fillStyle = '#33200e';
     ctx.beginPath(); ctx.arc(W/2-GATE/2, MID, 9, 0, 7); ctx.fill();
     ctx.beginPath(); ctx.arc(W/2+GATE/2, MID, 9, 0, 7); ctx.fill();
     // labels
@@ -518,5 +597,171 @@
   draw();
 })();
 </script>
+<script>
+// PuckRush app layer: install prompt, scorecard, worldwide leaderboard.
+(function(){
+  "use strict";
+  var SUPA_URL = 'https://ajljphrqbdbgekgaofry.supabase.co';
+  var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFqbGpwaHJxYmRiZ2VrZ2FvZnJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM4MjkxNzYsImV4cCI6MjEwOTQwNTE3Nn0.YkiwoUG_ppfMKIJ3JNhjnr_KmGAZsfS28mdpMN1cKvs';
+  function $(id){ return document.getElementById(id); }
+  function esc(t){ return String(t).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function fmtMs(ms){ if(!ms) return '—'; var s = Math.round(ms/1000); return Math.floor(s/60) + ':' + ('0' + (s % 60)).slice(-2); }
+
+  // ---------- identity + local scorecard ----------
+  var pid = 'p-anon';
+  try{
+    pid = localStorage.getItem('pr_pid') || '';
+    if(!pid){ pid = 'p-' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36); localStorage.setItem('pr_pid', pid); }
+  }catch(e){}
+  var pname = 'Player';
+  try{
+    pname = localStorage.getItem('pr_name') || '';
+    if(!pname){ pname = 'Player ' + Math.floor(100 + Math.random()*900); localStorage.setItem('pr_name', pname); }
+  }catch(e){}
+  var stats = { games:0, wins:0, bestMs:0, streak:0, cur:0 };
+  try{ var sv = JSON.parse(localStorage.getItem('pr_stats') || 'null'); if(sv) stats = sv; }catch(e){}
+  var pending = { games:0, wins:0, bestMs:0 };
+  try{ var pv = JSON.parse(localStorage.getItem('pr_pending') || 'null'); if(pv) pending = pv; }catch(e){}
+  function persist(){ try{ localStorage.setItem('pr_stats', JSON.stringify(stats)); localStorage.setItem('pr_pending', JSON.stringify(pending)); }catch(e){} }
+
+  // ---------- Supabase (public anon key; table allows read + upsert) ----------
+  function boardReady(){ return SUPA_URL.indexOf('https://') === 0; }
+  function supa(path, opts){
+    opts = opts || {};
+    var h = { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json' };
+    if(opts.headers) for(var k in opts.headers) h[k] = opts.headers[k];
+    opts.headers = h;
+    return fetch(SUPA_URL + '/rest/v1/' + path, opts).then(function(r){
+      if(!r.ok) throw new Error('board ' + r.status);
+      return r.status === 204 ? null : r.json().catch(function(){ return null; });
+    });
+  }
+  function fetchTop(){
+    return supa('scores?select=player_id,name,best_time_ms,wins,games&best_time_ms=not.is.null&order=best_time_ms.asc,updated_at.asc&limit=25');
+  }
+  function fetchMine(){
+    return supa('scores?select=player_id,name,best_time_ms,wins,games&player_id=eq.' + encodeURIComponent(pid))
+      .then(function(rows){ return (rows && rows[0]) || null; });
+  }
+  function syncScore(){
+    if(!boardReady()) return Promise.reject(new Error('no board'));
+    return fetchMine().then(function(row){
+      var games = (row ? row.games : 0) + pending.games;
+      var wins  = (row ? row.wins  : 0) + pending.wins;
+      var best  = row && row.best_time_ms ? row.best_time_ms : null;
+      if(pending.bestMs && (!best || pending.bestMs < best)) best = pending.bestMs;
+      var body = { player_id: pid, name: pname, best_time_ms: best, wins: wins, games: games, updated_at: new Date().toISOString() };
+      return supa('scores', { method: 'POST', headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify(body) });
+    }).then(function(){ pending = { games:0, wins:0, bestMs:0 }; persist(); });
+  }
+
+  // ---------- game finish hook (called by the game) ----------
+  window.__prFinish = function(won, ms, score, shots){
+    stats.games++; pending.games++;
+    if(won){
+      stats.wins++; pending.wins++; stats.cur++;
+      if(stats.cur > stats.streak) stats.streak = stats.cur;
+      if(!stats.bestMs || ms < stats.bestMs) stats.bestMs = ms;
+      if(!pending.bestMs || ms < pending.bestMs) pending.bestMs = ms;
+    } else stats.cur = 0;
+    persist(); renderCard();
+    var rankEl = $('end-rank');
+    if(rankEl) rankEl.textContent = 'Saving your score…';
+    syncScore().then(fetchTop).then(function(rows){
+      if(!rankEl) return;
+      var idx = -1;
+      for(var i = 0; i < rows.length; i++) if(rows[i].player_id === pid){ idx = i; break; }
+      if(idx >= 0) rankEl.textContent = '🌍 You are #' + (idx + 1) + ' in the world · best clear ' + fmtMs(stats.bestMs);
+      else if(won) rankEl.textContent = '🌍 Score saved — win even faster to crack the world top 25!';
+      else rankEl.textContent = '🌍 Win a game to join the world leaderboard';
+    }).catch(function(){
+      if(rankEl) rankEl.textContent = won ? '🏆 Win saved on this device' : '';
+    });
+  };
+
+  // ---------- panel ----------
+  var panel = $('panel');
+  function openPanel(board){
+    panel.classList.remove('hidden');
+    showTab(board ? 'board' : 'card');
+    if(board) renderBoard(); else renderCard();
+  }
+  function closePanel(){ panel.classList.add('hidden'); }
+  function showTab(which){
+    $('tab-card').classList.toggle('on', which === 'card');
+    $('tab-board').classList.toggle('on', which === 'board');
+    $('pane-card').classList.toggle('hidden', which !== 'card');
+    $('pane-board').classList.toggle('hidden', which !== 'board');
+  }
+  function renderCard(){
+    $('inp-name').value = pname;
+    $('st-games').textContent = stats.games;
+    $('st-wins').textContent = stats.wins;
+    $('st-rate').textContent = stats.games ? Math.round(stats.wins / stats.games * 100) + '%' : '—';
+    $('st-best').textContent = fmtMs(stats.bestMs);
+    var bs = 0; try{ bs = +(localStorage.getItem('puckrush_best') || 0); }catch(e){}
+    $('st-score').textContent = bs || '—';
+    $('st-streak').textContent = stats.streak;
+  }
+  function renderBoard(){
+    var list = $('lb-list'), status = $('lb-status');
+    if(!boardReady()){ status.textContent = 'The world leaderboard is being set up — your wins are still saved on this device.'; list.innerHTML = ''; return; }
+    status.textContent = 'Loading world scores…';
+    fetchTop().then(function(rows){
+      if(!rows || !rows.length){ status.textContent = 'No world scores yet — win a game and be the first name here!'; list.innerHTML = ''; return; }
+      status.textContent = 'Top ' + rows.length + ' fastest clears worldwide. Your row is highlighted.';
+      var html = '';
+      rows.forEach(function(r, i){
+        var medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '#' + (i + 1);
+        html += '<div class="lbrow' + (r.player_id === pid ? ' me' : '') + '"><div class="rk">' + medal + '</div>' +
+                '<div class="nm">' + esc(r.name) + '</div>' +
+                '<div class="wn">' + r.wins + ' wins</div>' +
+                '<div class="tm">' + fmtMs(r.best_time_ms) + '</div></div>';
+      });
+      list.innerHTML = html;
+    }).catch(function(){
+      status.textContent = 'Leaderboard needs internet — your scorecard still works offline.';
+      list.innerHTML = '';
+    });
+  }
+  $('btn-card').addEventListener('click', function(){ openPanel(false); });
+  $('btn-board').addEventListener('click', function(){ openPanel(true); });
+  $('btn-end-board').addEventListener('click', function(){ openPanel(true); });
+  $('btn-close-panel').addEventListener('click', closePanel);
+  panel.addEventListener('click', function(e){ if(e.target === panel) closePanel(); });
+  $('tab-card').addEventListener('click', function(){ showTab('card'); renderCard(); });
+  $('tab-board').addEventListener('click', function(){ showTab('board'); renderBoard(); });
+  $('btn-name').addEventListener('click', function(){
+    var v = $('inp-name').value.trim().slice(0, 20);
+    if(v){ pname = v; try{ localStorage.setItem('pr_name', pname); }catch(e){} }
+    $('inp-name').value = pname;
+    $('btn-name').textContent = 'Saved ✓';
+    setTimeout(function(){ $('btn-name').textContent = 'Save'; }, 1200);
+    syncScore().catch(function(){});
+  });
+  renderCard();
+  if(pending.games) syncScore().catch(function(){});
+
+  // ---------- install (Add to Home Screen) ----------
+  if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(function(){}); }
+  var btnInstall = $('btn-install'), deferred = null;
+  var standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+  var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent || '');
+  window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); deferred = e; if(!standalone) btnInstall.classList.remove('hidden'); });
+  window.addEventListener('appinstalled', function(){ btnInstall.classList.add('hidden'); });
+  if(isIOS && !standalone) btnInstall.classList.remove('hidden');
+  btnInstall.addEventListener('click', function(){
+    if(deferred){
+      deferred.prompt();
+      deferred.userChoice.then(function(){ deferred = null; btnInstall.classList.add('hidden'); });
+    } else if(isIOS){
+      alert('To install PuckRush like an app:\n\n1. Tap the Share button in Safari\n2. Tap "Add to Home Screen"\n3. Tap Add — the PuckRush icon lands on your home screen.');
+    } else {
+      alert('To install PuckRush like an app:\n\nOpen the browser menu (⋮) and tap "Install app" or "Add to Home Screen" — the PuckRush icon will appear on your home screen.');
+    }
+  });
+})();
+</script>
 </body>
+
 </html>
