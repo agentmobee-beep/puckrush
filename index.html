@@ -184,7 +184,7 @@
       <p class="lb-note">Your scorecard lives on this device. Your wins also appear on the world leaderboard under your name.</p>
     </div>
     <div id="pane-board" class="hidden">
-      <p class="lb-note" id="lb-status">Fastest clears from players around the world.</p>
+      <p class="lb-note" id="lb-status">Ranked by wins — fastest clear breaks ties.</p>
       <div id="lb-list"></div>
     </div>
   </div>
@@ -636,7 +636,7 @@
     });
   }
   function fetchTop(){
-    return supa('scores?select=player_id,name,best_time_ms,wins,games&best_time_ms=not.is.null&order=best_time_ms.asc,updated_at.asc&limit=25');
+    return supa('scores?select=player_id,name,best_time_ms,wins,games&best_time_ms=not.is.null&order=wins.desc,best_time_ms.asc,updated_at.asc&limit=25');
   }
   function fetchMine(){
     return supa('scores?select=player_id,name,best_time_ms,wins,games&player_id=eq.' + encodeURIComponent(pid))
@@ -696,8 +696,8 @@
       if(!rankEl) return;
       var idx = -1;
       for(var i = 0; i < rows.length; i++) if(rows[i].player_id === pid){ idx = i; break; }
-      if(idx >= 0) rankEl.textContent = '🌍 You are #' + (idx + 1) + ' in the world · best clear ' + fmtMs(stats.bestMs);
-      else if(won) rankEl.textContent = '🌍 Score saved — win even faster to crack the world top 25!';
+      if(idx >= 0) rankEl.textContent = '🌍 You are #' + (idx + 1) + ' in the world · ' + stats.wins + ' wins · best clear ' + fmtMs(stats.bestMs);
+      else if(won) rankEl.textContent = '🌍 Score saved — collect more wins to climb the world top 25!';
       else rankEl.textContent = '🌍 Win a game to join the world leaderboard';
     }).catch(function(){
       if(rankEl) rankEl.textContent = won ? '🏆 Win saved on this device' : '';
@@ -734,14 +734,14 @@
     status.textContent = 'Loading world scores…';
     fetchTop().then(function(rows){
       if(!rows || !rows.length){ status.textContent = 'No world scores yet — win a game and be the first name here!'; list.innerHTML = ''; return; }
-      status.textContent = 'Top ' + rows.length + ' fastest clears worldwide. Your row is highlighted.';
+      status.textContent = 'Top ' + rows.length + ' players worldwide — most wins first. Your row is highlighted.';
       var html = '';
       rows.forEach(function(r, i){
         var medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '#' + (i + 1);
         html += '<div class="lbrow' + (r.player_id === pid ? ' me' : '') + '"><div class="rk">' + medal + '</div>' +
                 '<div class="nm">' + esc(r.name) + '</div>' +
-                '<div class="wn">' + r.wins + ' wins</div>' +
-                '<div class="tm">' + fmtMs(r.best_time_ms) + '</div></div>';
+                '<div class="wn">best ' + fmtMs(r.best_time_ms) + '</div>' +
+                '<div class="tm">' + r.wins + ' wins</div></div>';
       });
       list.innerHTML = html;
     }).catch(function(){
