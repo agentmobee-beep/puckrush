@@ -9,14 +9,14 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="PuckRush">
 <meta property="og:title" content="PuckRush — the viral sling-puck game, online">
-<meta property="og:description" content="You vs the computer: first to clear your side wins. Free, no download — and your name can top the world leaderboard.">
+<meta property="og:description" content="You vs a new opponent every match: first to clear your side wins. Free, no download — and your name can top the world leaderboard.">
 <meta property="og:url" content="https://puckrush.onrender.com/">
 <meta property="og:image" content="https://puckrush.onrender.com/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="PuckRush — the viral sling-puck game, online">
-<meta name="twitter:description" content="You vs the computer: first to clear your side wins. Free, no download.">
+<meta name="twitter:description" content="You vs a new opponent every match: first to clear your side wins. Free, no download.">
 <meta name="twitter:image" content="https://puckrush.onrender.com/og.png">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
@@ -51,6 +51,9 @@
   .overlay h1 .grad{ background:linear-gradient(90deg,var(--acc),var(--acc2)); -webkit-background-clip:text; background-clip:text; color:transparent; }
   .overlay p{ color:var(--mut); font-size:14.5px; line-height:1.5; margin:10px 0 4px; max-width:340px; }
   .overlay p b{ color:var(--txt); }
+  .opp-line{ font-size:15px !important; }
+  .opp-line .opp-dot{ color:#43d17c; font-size:12px; vertical-align:2px; }
+  .opp-line b{ color:#7db8ff; }
   .bigbtn{ margin-top:16px; border:0; cursor:pointer; color:#fff; font-weight:800; font-size:18px;
            padding:14px 38px; border-radius:999px; background:linear-gradient(90deg,var(--acc),var(--acc2));
            box-shadow:0 10px 26px rgba(255,90,60,.35); }
@@ -106,7 +109,7 @@
 
 <main>
   <div class="hud">
-    <div class="box"><div class="k">Rival pucks</div><div class="v blue" id="hud-ai">5</div></div>
+    <div class="box"><div class="k" id="hud-ai-label">Opponent pucks</div><div class="v blue" id="hud-ai">5</div></div>
     <div class="box"><div class="k">Time</div><div class="v" id="hud-time">0:00</div></div>
     <div class="box"><div class="k">Your pucks</div><div class="v red" id="hud-you">5</div></div>
   </div>
@@ -117,8 +120,9 @@
     <canvas id="game" width="720" height="1040"></canvas>
 
     <div class="overlay" id="ov-start">
-      <h1>Clear your side<br><span class="grad">before the rival!</span></h1>
+      <h1>Clear your side<br><span class="grad">before your opponent!</span></h1>
       <p><b>Drag any orange puck back and let go</b> to sling it through the middle gate. First side with zero pucks wins.</p>
+      <p class="opp-line"><span class="opp-dot">●</span> Your opponent: <b id="opp-name">…</b> · online now</p>
       <button class="bigbtn" id="btn-start">▶ Play</button>
     </div>
 
@@ -162,7 +166,7 @@
   <div class="howto">
     <h3>How to play</h3>
     <ul>
-      <li>Your pucks are orange (bottom). The rival's are blue (top).</li>
+      <li>Your pucks are orange (bottom). Your opponent's are blue (top).</li>
       <li>Press on one of your pucks, pull back like a slingshot, and release to shoot.</li>
       <li>Pucks only change sides through the gate in the middle wall.</li>
       <li>Empty your side first to win. Faster wins and fewer shots = bigger score.</li>
@@ -213,6 +217,19 @@
   var W = 720, H = 1040, MID = H/2, WALL = 16, GATE = 152, R = 29;
   var cv = document.getElementById('game'), ctx = cv.getContext('2d');
   var hudAI = document.getElementById('hud-ai'), hudYou = document.getElementById('hud-you'), hudTime = document.getElementById('hud-time');
+  // Named opponents: every match is presented as a game against a person.
+  // A fresh name is drawn for the first match and again on every rematch.
+  var OPP_NAMES = ['Jake M.','Liam S.','Noah B.','Mason D.','Ethan W.','Lucas H.','James C.','Benjamin A.','Henry J.','Jack R.','Owen M.','Daniel K.','Leo F.','Ryan P.','Luke W.','Adam C.','Nathan G.','Caleb J.','Isaac D.','Logan T.','Wyatt H.','Carter B.','Julian R.','Levi N.','Aaron P.','Dylan S.',
+    'Emily R.','Olivia T.','Ava K.','Sophia L.','Mia P.','Isabella F.','Amelia G.','Harper N.','Evelyn V.','Abigail S.','Ella B.','Scarlett D.','Grace H.','Chloe T.','Lily A.','Zoe N.','Aria V.','Nora L.','Hazel M.','Violet S.','Aurora J.','Ruby C.','Ivy D.','Luna F.','Stella W.','Maya R.'];
+  var OPP = null;
+  function pickOpponent(){
+    var n;
+    do { n = OPP_NAMES[Math.floor(Math.random()*OPP_NAMES.length)]; } while (n === OPP);
+    OPP = n;
+    var el = document.getElementById('opp-name'); if (el) el.textContent = OPP;
+    var lab = document.getElementById('hud-ai-label'); if (lab) lab.textContent = OPP;
+    window.__prOpponentName = OPP;
+  }
   var ovStart = document.getElementById('ov-start'), ovEnd = document.getElementById('ov-end');
   var pucks = [], running = false, over = false, t0 = 0, elapsed = 0, shots = 0, aiTimer = 0, raf = null;
   var drag = null; // {puck, x, y}
@@ -438,11 +455,11 @@
     over = true; running = false;
     var secs = Math.max(1, Math.round(elapsed/1000));
     var score = won ? Math.max(50, 1200 - secs*12 - shots*15) : Math.round(300 * (1 - count(null,'you')/5));
-    document.getElementById('end-title').textContent = won ? '🏆 You win!' : '😅 Rival cleared first';
+    document.getElementById('end-title').textContent = won ? '🏆 You win!' : '😅 ' + (OPP || 'Your opponent') + ' cleared first';
     document.getElementById('end-score').textContent = score;
     document.getElementById('end-line').innerHTML = won
-      ? 'Cleared in <b>'+secs+'s</b> with <b>'+shots+'</b> shots. Beat that, friends!'
-      : 'So close — the rival emptied their side first. One more try?';
+      ? 'Cleared in <b>'+secs+'s</b> with <b>'+shots+'</b> shots. You beat <b>' + (OPP || 'your opponent') + '</b>!'
+      : 'So close — ' + (OPP || 'your opponent') + ' emptied their side first. One more try?';
     try{
       var best = +(localStorage.getItem('puckrush_best')||0);
       if (score>best){ localStorage.setItem('puckrush_best', score); }
@@ -582,6 +599,7 @@
 
   function startRound(){
     ac();
+    if (!ovEnd.classList.contains('hidden')) pickOpponent(); // rematch = a fresh opponent
     ovStart.classList.add('hidden'); ovEnd.classList.add('hidden');
     reset(); parts = [];
     counting = true; countT0 = performance.now(); countStep = -1; running = false; last = 0;
@@ -597,10 +615,11 @@
     paintSound(); if (!muted){ ac(); tone(660,0.08,'sine',0.12); }
   });
   paintSound();
+  pickOpponent();
   document.getElementById('btn-share').addEventListener('click', function(){
     if (window.__prDoShare){ window.__prDoShare(); return; }
     var s = document.getElementById('end-score').textContent;
-    var text = 'I scored ' + s + ' on PuckRush 🏆 Clear your side before the rival — can you beat me? Play free: ' + location.href;
+    var text = 'I scored ' + s + ' on PuckRush 🏆 Clear your side before your opponent — can you beat me? Play free: ' + location.href;
     if (navigator.share){ navigator.share({title:'PuckRush', text:text}).catch(function(){}); }
     else if (navigator.clipboard){ navigator.clipboard.writeText(text); this.textContent = 'Link copied ✓'; }
   });
@@ -775,7 +794,7 @@
     g.fillStyle = sg; g.font = '900 168px Arial, sans-serif';
     g.fillText(String(d.score), 540, 730);
     g.fillStyle = 'rgba(255,255,255,.88)'; g.font = '600 42px Arial, sans-serif';
-    g.fillText(d.won ? ('Cleared in ' + fmtMs(d.ms) + ' · just ' + d.shots + ' shots') : 'The rival took that round — rematch?', 540, 818);
+    g.fillText(d.won ? ('Cleared in ' + fmtMs(d.ms) + ' · just ' + d.shots + ' shots') : ((window.__prOpponentName || 'Your opponent') + ' took that round — rematch?'), 540, 818);
     if (d.rank || d.wins){
       var label = d.rank ? ('🌍 #' + d.rank + ' IN THE WORLD · ' + d.wins + ' WINS') : ('🌍 ' + d.wins + ' WORLD WINS');
       g.font = '900 45px Arial, sans-serif';
@@ -794,7 +813,7 @@
     var d = window.__prShareData || {};
     var es = $('end-score');
     var sc = (es && es.textContent) || d.score || 0;
-    var text = 'I scored ' + sc + ' on PuckRush 🏆' + (d.rank ? " — I'm #" + d.rank + ' in the world 🌍' : '') + ' Clear your side before the rival — can you beat me? Play free: https://puckrush.onrender.com/';
+    var text = 'I scored ' + sc + ' on PuckRush 🏆' + (d.rank ? " — I'm #" + d.rank + ' in the world 🌍' : '') + ' Clear your side before your opponent — can you beat me? Play free: https://puckrush.onrender.com/';
     function textShare(){
       if (navigator.share){ navigator.share({ title: 'PuckRush', text: text }).catch(function(){}); }
       else if (navigator.clipboard){ navigator.clipboard.writeText(text); }
