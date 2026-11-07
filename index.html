@@ -981,12 +981,17 @@
   var btnInstall = $('btn-install'), btnEndInstall = $('btn-end-install'), deferred = null;
   var standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
   var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent || '');
+  // In-app browsers (Instagram, Facebook, TikTok...) never fire
+  // beforeinstallprompt and cannot install directly - but the buttons
+  // must still show there, with "open in a real browser" guidance,
+  // because most social traffic plays inside them.
+  var inApp = /Instagram|FBAN|FBAV|FB_IAB|TikTok|musical_ly|Snapchat|Line\//i.test(navigator.userAgent || '');
   function syncInstallButtons(){
     // The finish-screen button lives inside the end overlay, so it shows
     // on every finish (win or lose) whenever installing is possible.
     // The big above-board button shows only before a game starts - never
     // while a game is being played (both overlays hidden = game running).
-    var show = !standalone && (!!deferred || isIOS);
+    var show = !standalone && (!!deferred || isIOS || inApp);
     var ovS = $('ov-start'), ovE = $('ov-end');
     var inGame = !!(ovS && ovE && ovS.classList.contains('hidden') && ovE.classList.contains('hidden'));
     btnInstall.classList.toggle('hidden', !(show && !inGame));
@@ -999,6 +1004,10 @@
     if(deferred){
       deferred.prompt();
       deferred.userChoice.then(function(){ deferred = null; syncInstallButtons(); });
+    } else if(inApp && isIOS){
+      alert('To add PuckRush to your home screen:\n\n1. Tap "Open in Safari" (in the menu or share options)\n2. In Safari tap the Share button\n3. Tap "Add to Home Screen"\n\n(Apps like Instagram open links in their own mini-browser, which cannot install apps directly.)');
+    } else if(inApp){
+      alert('To add PuckRush to your home screen:\n\n1. Tap the ⋮ menu at the top right\n2. Tap "Open in Chrome"\n3. In Chrome, tap ⋮ → "Install app" or "Add to Home Screen"\n\n(This app\'s built-in browser cannot install apps directly.)');
     } else if(isIOS){
       alert('To install PuckRush like an app:\n\n1. Tap the Share button in Safari\n2. Tap "Add to Home Screen"\n3. Tap Add — the PuckRush icon lands on your home screen.');
     } else {
