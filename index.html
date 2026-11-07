@@ -241,14 +241,25 @@
   // Named opponents: every match is presented as a game against a person.
   // A fresh name is drawn for the first match and again on every rematch.
   var OPP_NAMES = ['Jake M.','Liam S.','Noah B.','Mason D.','Ethan W.','Lucas H.','James C.','Benjamin A.','Henry J.','Jack R.','Owen M.','Daniel K.','Leo F.','Ryan P.','Luke W.','Adam C.','Nathan G.','Caleb J.','Isaac D.','Logan T.','Wyatt H.','Carter B.','Julian R.','Levi N.','Aaron P.','Dylan S.',
-    'Emily R.','Olivia T.','Ava K.','Sophia L.','Mia P.','Isabella F.','Amelia G.','Harper N.','Evelyn V.','Abigail S.','Ella B.','Scarlett D.','Grace H.','Chloe T.','Lily A.','Zoe N.','Aria V.','Nora L.','Hazel M.','Violet S.','Aurora J.','Ruby C.','Ivy D.','Luna F.','Stella W.','Maya R.'];
+    'Emily R.','Olivia T.','Ava K.','Sophia L.','Mia P.','Isabella F.','Amelia G.','Harper N.','Evelyn V.','Abigail S.','Ella B.','Scarlett D.','Grace H.','Chloe T.','Lily A.','Zoe N.','Aria V.','Nora L.','Hazel M.','Violet S.','Aurora J.','Ruby C.','Ivy D.','Luna F.','Stella W.','Maya R.',
+    'Ethan Carter','Liam Sullivan','Noah Bennett','Mason Reed','Lucas Hayes','Logan Pierce','Jackson Cole','Aiden Foster','James Whitaker','Benjamin Clarke','Elijah Morgan','Henry Lawson','Owen Barrett','Caleb Turner','Ryan Mitchell','Dylan Harper','Nathan Brooks','Jordan Ellis','Connor Walsh','Tyler Grant','Brandon Doyle','Austin Keller','Kyle Ramsey','Zachary Hale','Hunter Nash','Chase Donovan','Blake Thornton','Cole Maddox','Evan Calloway','Gavin Fletcher','Trevor Lawson','Parker Quinn','Spencer Vaughn','Dominic Russo','Adrian Cross','Marcus Delgado',"Sean O'Connor",'Cody Beckett','Jesse Langston','Wesley Crane','Garrett Sloan','Travis Boone','Seth Caldwell','Derek Monroe','Phillip Archer','Wade Hensley','Brock Stanton','Dalton Mercer','Trent Hollis','Miles Ashford',
+    'Ava Thompson','Sophia Reynolds','Mia Henderson','Isabella Warren','Charlotte Price','Amelia Foster','Harper Quinn','Evelyn Marsh','Abigail Stone','Emily Carlson','Elizabeth Barnes','Sofia Delgado','Madison Pierce','Avery Collins','Ella Richardson','Scarlett Monroe','Grace Whitfield','Chloe Patterson','Victoria Lane','Riley Chapman','Aria Montgomery','Lily Callahan','Aubrey Sinclair','Zoey Fitzgerald','Penelope Brooks','Layla Donovan','Nora Whitaker','Camila Herrera','Hannah Prescott','Addison Reed','Brooklyn Hayes','Savannah Cole','Natalie Vance','Leah Buchanan','Samantha Rhodes','Anna Whitmore','Hailey Sutton','Kayla Mercer','Brianna Caldwell','Taylor Ashworth','Lauren Bishop','Alexis Thornton','Rachel Donovan','Megan Holliday','Jessica Langley','Danielle Frost','Courtney Ellison','Morgan Delaney','Julia Pennington','Sara Beaumont'];
   var OPP = null;
+  // The small counter box shows a short tag ("Ethan C.") while the start
+  // screen, the board and the finish texts use the full name.
+  function shortName(n){
+    var p = n.trim().split(/\s+/);
+    if (p.length < 2) return n;
+    var last = p[p.length - 1];
+    if (last.length === 2 && last.charAt(1) === '.') return n; // already "First L."
+    return p[0] + ' ' + last.charAt(0) + '.';
+  }
   function pickOpponent(){
     var n;
     do { n = OPP_NAMES[Math.floor(Math.random()*OPP_NAMES.length)]; } while (n === OPP);
     OPP = n;
     var el = document.getElementById('opp-name'); if (el) el.textContent = OPP;
-    var lab = document.getElementById('hud-ai-label'); if (lab) lab.textContent = OPP;
+    var lab = document.getElementById('hud-ai-label'); if (lab) lab.textContent = shortName(OPP);
     window.__prOpponentName = OPP;
   }
   var ovStart = document.getElementById('ov-start'), ovEnd = document.getElementById('ov-end');
