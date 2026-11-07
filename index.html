@@ -96,6 +96,12 @@
   .actbtn{ flex:1; background:var(--panel); border:1px solid var(--line); color:var(--txt); font-weight:700; font-size:14px; padding:11px 6px; border-radius:12px; cursor:pointer; }
   .actbtn:active{ transform:scale(.97); }
   #btn-install{ width:100%; margin:0 0 10px; background:linear-gradient(90deg,var(--acc),var(--acc2)); border:0; color:#fff; box-shadow:0 8px 20px rgba(255,90,60,.30); }
+  /* Instagram-only guide banner (shown solely inside Instagram's browser) */
+  #ig-tip{ position:relative; margin:0 0 10px; padding:10px 34px 10px 12px; background:linear-gradient(90deg, rgba(255,122,26,.20), rgba(255,61,87,.16)); border:1px solid rgba(255,122,26,.55); border-radius:12px; font-size:13.5px; line-height:1.45; cursor:pointer; }
+  #ig-tip b{ color:var(--gold); }
+  #ig-tip .arrow{ float:right; font-size:17px; margin:-2px -22px 0 6px; }
+  #ig-tip-x{ position:absolute; top:6px; right:9px; font-size:14px; opacity:.75; padding:2px 4px; }
+  body.playing #ig-tip{ display:none; }
   #end-rank{ color:var(--acc2); font-weight:700; }
   .panel{ position:fixed; inset:0; z-index:60; background:rgba(4,6,11,.72); display:flex; align-items:flex-end; justify-content:center; }
   .sheet{ background:var(--panel); border:1px solid var(--line); border-bottom:0; border-radius:18px 18px 0 0; width:100%; max-width:520px; max-height:88vh; overflow-y:auto; padding:16px 16px 26px; }
@@ -137,6 +143,7 @@
     <div class="box"><div class="k">Your pucks</div><div class="v red" id="hud-you">5</div></div>
   </div>
 
+  <div id="ig-tip" class="hidden"><span class="arrow">↗</span>📲 <b>You're in Instagram's browser!</b> Tap <b>⋮</b> at the top-right, then <b>"Open in Chrome"</b> — to install the app &amp; keep your wins.<span id="ig-tip-x">✕</span></div>
   <button class="actbtn hidden" id="btn-install">📲 Get the app</button>
 
   <div id="wrap">
@@ -986,6 +993,9 @@
   // must still show there, with "open in a real browser" guidance,
   // because most social traffic plays inside them.
   var inApp = /Instagram|FBAN|FBAV|FB_IAB|TikTok|musical_ly|Snapchat|Line\//i.test(navigator.userAgent || '');
+  var isIG = /Instagram/i.test(navigator.userAgent || '');
+  var igTip = $('ig-tip'), igTipOff = false;
+  try{ igTipOff = localStorage.getItem('pr_ig_tip_off') === '1'; }catch(e){}
   function syncInstallButtons(){
     // The finish-screen button lives inside the end overlay, so it shows
     // on every finish (win or lose) whenever installing is possible.
@@ -996,7 +1006,17 @@
     var inGame = !!(ovS && ovE && ovS.classList.contains('hidden') && ovE.classList.contains('hidden'));
     btnInstall.classList.toggle('hidden', !(show && !inGame));
     if (btnEndInstall) btnEndInstall.classList.toggle('hidden', !show);
+    // The guide banner shows ONLY inside Instagram's browser, and only
+    // outside active play (CSS hides it while a round runs).
+    if (igTip) igTip.classList.toggle('hidden', !(isIG && !igTipOff && !inGame));
   }
+  if (igTip) igTip.addEventListener('click', function(){ doInstall(); });
+  var igX = $('ig-tip-x');
+  if (igX) igX.addEventListener('click', function(ev){
+    ev.stopPropagation(); igTipOff = true;
+    try{ localStorage.setItem('pr_ig_tip_off', '1'); }catch(e){}
+    if (igTip) igTip.classList.add('hidden');
+  });
   window.__prSyncInstall = syncInstallButtons; // the game re-syncs on finish, when the big button may show again
   window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); deferred = e; syncInstallButtons(); });
   window.addEventListener('appinstalled', function(){ standalone = true; syncInstallButtons(); });
