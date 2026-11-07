@@ -135,6 +135,7 @@
       <button class="ghostbtn" id="btn-share">Share my score</button>
       <button class="ghostbtn" id="btn-end-board">🌍 World leaderboard</button>
       <button class="ghostbtn" id="btn-end-card">🏆 My scorecard</button>
+      <button class="ghostbtn hidden" id="btn-end-install">📲 Add to Home Screen</button>
       <div class="adslot">
         <div class="cap">Advertisement</div>
         <div id="adbox-finish">
@@ -493,7 +494,7 @@
     ctx.beginPath(); ctx.arc(W/2+GATE/2, MID, 9, 0, 7); ctx.fill();
     // labels
     ctx.fillStyle = 'rgba(35,45,64,0.55)'; ctx.font = '700 25px system-ui'; ctx.textAlign='center';
-    ctx.fillText('RIVAL', W/2, 44);
+    ctx.fillText((OPP || 'RIVAL').toUpperCase(), W/2, 44);
     ctx.fillText('YOU', W/2, H-22);
     // aim
     if (drag){
@@ -901,22 +902,31 @@
 
   // ---------- install (Add to Home Screen) ----------
   if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(function(){}); }
-  var btnInstall = $('btn-install'), deferred = null;
+  var btnInstall = $('btn-install'), btnEndInstall = $('btn-end-install'), deferred = null;
   var standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
   var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent || '');
-  window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); deferred = e; if(!standalone) btnInstall.classList.remove('hidden'); });
-  window.addEventListener('appinstalled', function(){ btnInstall.classList.add('hidden'); });
-  if(isIOS && !standalone) btnInstall.classList.remove('hidden');
-  btnInstall.addEventListener('click', function(){
+  function syncInstallButtons(){
+    // The finish-screen button lives inside the end overlay, so it shows
+    // on every finish (win or lose) whenever installing is possible.
+    var show = !standalone && (!!deferred || isIOS);
+    btnInstall.classList.toggle('hidden', !show);
+    if (btnEndInstall) btnEndInstall.classList.toggle('hidden', !show);
+  }
+  window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); deferred = e; syncInstallButtons(); });
+  window.addEventListener('appinstalled', function(){ standalone = true; syncInstallButtons(); });
+  function doInstall(){
     if(deferred){
       deferred.prompt();
-      deferred.userChoice.then(function(){ deferred = null; btnInstall.classList.add('hidden'); });
+      deferred.userChoice.then(function(){ deferred = null; syncInstallButtons(); });
     } else if(isIOS){
       alert('To install PuckRush like an app:\n\n1. Tap the Share button in Safari\n2. Tap "Add to Home Screen"\n3. Tap Add — the PuckRush icon lands on your home screen.');
     } else {
       alert('To install PuckRush like an app:\n\nOpen the browser menu (⋮) and tap "Install app" or "Add to Home Screen" — the PuckRush icon will appear on your home screen.');
     }
-  });
+  }
+  btnInstall.addEventListener('click', doInstall);
+  if (btnEndInstall) btnEndInstall.addEventListener('click', doInstall);
+  syncInstallButtons();
 })();
 </script>
 </body>
