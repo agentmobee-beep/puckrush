@@ -746,6 +746,26 @@
   $('btn-start').addEventListener('click', refreshBoardAds);
   $('btn-again').addEventListener('click', refreshBoardAds);
 
+  // Timed refresh of the under-board banner: a fresh creative every 30s
+  // while the banner is actually on screen, so longer games keep earning
+  // impressions without touching gameplay. Pauses when the tab is hidden
+  // or the scorecard/leaderboard panel covers the page. reloadAd's own
+  // 20s-per-slot throttle still applies, so this can never spam.
+  ['mobile','desktop'].forEach(function(w){
+    var st = adState[w] || (adState[w] = { n: 0, t: 0 });
+    if (st.n === 0) st.n = 1; // page-load showing already counts as the first
+  });
+  setInterval(function(){
+    if (document.hidden) return;
+    var panel = $('panel');
+    if (panel && !panel.classList.contains('hidden')) return;
+    var box = window.innerWidth >= 760 ? $('adbox-desktop') : $('adbox-mobile');
+    if (!box) return;
+    var r = box.getBoundingClientRect();
+    if (r.bottom < 0 || r.top > window.innerHeight) return;
+    refreshBoardAds();
+  }, 30000);
+
   // ---------- game finish hook (called by the game) ----------
   window.__prFinish = function(won, ms, score, shots){
     reloadAd('finish');
