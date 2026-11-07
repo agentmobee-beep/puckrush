@@ -487,8 +487,8 @@
       if (score>best){ localStorage.setItem('puckrush_best', score); }
     }catch(e){}
     try{ if (window.__prFinish) window.__prFinish(won, Math.round(elapsed), score, shots); }catch(e){}
-    if (won){ burst(); sWin(); setTimeout(function(){ if (over) ovEnd.classList.remove('hidden'); }, 950); }
-    else { sLose(); ovEnd.classList.remove('hidden'); }
+    if (won){ burst(); sWin(); setTimeout(function(){ if (over){ ovEnd.classList.remove('hidden'); if (window.__prSyncInstall) window.__prSyncInstall(); } }, 950); }
+    else { sLose(); ovEnd.classList.remove('hidden'); if (window.__prSyncInstall) window.__prSyncInstall(); }
   }
 
   function draw(){
@@ -939,6 +939,7 @@
     btnInstall.classList.toggle('hidden', !(show && !inGame));
     if (btnEndInstall) btnEndInstall.classList.toggle('hidden', !show);
   }
+  window.__prSyncInstall = syncInstallButtons; // the game re-syncs on finish, when the big button may show again
   window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); deferred = e; syncInstallButtons(); });
   window.addEventListener('appinstalled', function(){ standalone = true; syncInstallButtons(); });
   function doInstall(){
