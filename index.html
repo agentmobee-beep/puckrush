@@ -43,7 +43,13 @@
   .hud .k{ font-size:10.5px; color:var(--mut); text-transform:uppercase; letter-spacing:.8px; }
   .hud .v{ font-size:19px; font-weight:800; margin-top:1px; }
   .hud .v.red{ color:var(--acc2); } .hud .v.blue{ color:var(--blue); }
-  #wrap{ position:relative; width:100%; }
+  /* Board is sized so header + counters + board + the ad under the board
+     fit on one phone screen during play - the board never runs to the very
+     bottom edge and pushes the ad off-screen. */
+  #wrap{ position:relative; width:100%; margin:0 auto;
+         width:min(100%, max(270px, calc((100vh - 208px) * 0.69231)));
+         width:min(100%, max(270px, calc((100dvh - 208px) * 0.69231))); }
+  body.playing{ overflow:hidden; }
   canvas{ width:100%; display:block; border-radius:18px; background:#1a1430; box-shadow:0 18px 50px rgba(0,0,0,.5); touch-action:none; }
   .overlay{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
             background:rgba(7,9,16,.78); border-radius:18px; text-align:center; padding:22px; backdrop-filter:blur(2px); }
@@ -468,6 +474,7 @@
 
   function finish(won){
     over = true; running = false;
+    document.body.classList.remove('playing'); // unlock scroll on the finish screen
     var secs = Math.max(1, Math.round(elapsed/1000));
     var score = won ? Math.max(50, 1200 - secs*12 - shots*15) : Math.max(0, Math.round(300 * (1 - count(null,'you')/5)));
     document.getElementById('end-title').textContent = won ? '🏆 You win!' : '😅 ' + (OPP || 'Your opponent') + ' cleared first';
@@ -615,6 +622,8 @@
   function startRound(){
     ac();
     if (!ovEnd.classList.contains('hidden')) pickOpponent(); // rematch = a fresh opponent
+    var gi = document.getElementById('btn-install'); if (gi) gi.classList.add('hidden'); // no install button during play
+    document.body.classList.add('playing'); // lock page scroll while playing
     ovStart.classList.add('hidden'); ovEnd.classList.add('hidden');
     reset(); parts = [];
     counting = true; countT0 = performance.now(); countStep = -1; running = false; last = 0;
@@ -922,8 +931,12 @@
   function syncInstallButtons(){
     // The finish-screen button lives inside the end overlay, so it shows
     // on every finish (win or lose) whenever installing is possible.
+    // The big above-board button shows only before a game starts - never
+    // while a game is being played (both overlays hidden = game running).
     var show = !standalone && (!!deferred || isIOS);
-    btnInstall.classList.toggle('hidden', !show);
+    var ovS = $('ov-start'), ovE = $('ov-end');
+    var inGame = !!(ovS && ovE && ovS.classList.contains('hidden') && ovE.classList.contains('hidden'));
+    btnInstall.classList.toggle('hidden', !(show && !inGame));
     if (btnEndInstall) btnEndInstall.classList.toggle('hidden', !show);
   }
   window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); deferred = e; syncInstallButtons(); });
