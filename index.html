@@ -336,7 +336,7 @@
       pucks.push({x:xs[(i+2)%5], y:MID-150-(i%2)*120, vx:0, vy:0, side:'ai'});
     }
     elapsed = 0; shots = 0; over = false;
-    aiTimer = 90;
+    aiTimer = 100; // 90% toughness: first rival shot slightly delayed (was 90 at 100%)
     updateHUD();
   }
   function count(side, area){
@@ -402,7 +402,7 @@
       aiTimer -= dt*60;
       if (aiTimer<=0){
         var secs = elapsed/1000;
-        aiTimer = (Math.max(80, 135 - secs*0.7) + Math.random()*45); // full toughness (the 10% softness was removed 2026-11-04 at Anne's request, once pucks/gate grew)
+        aiTimer = (Math.max(80, 135 - secs*0.7) + Math.random()*45) / 0.9; // 90% toughness (Anne, 2026-11-07): rival shoots a little slower than the 100% build
         var mine = pucks.filter(function(q){ return q.y < MID; });
         if (mine.length){
           var q;
@@ -415,14 +415,14 @@
           } else {
             q = mine[Math.floor(Math.random()*mine.length)];
           }
-          var errRange = Math.max(40, 100 - secs*0.8); // full-toughness aim error
+          var errRange = Math.max(40, 100 - secs*0.8) / 0.9; // 90% toughness: a little more aim error
           var err = (Math.random()-0.5)*errRange;
           var tx = W/2 + err, ty = MID + 34;
           var dx = tx-q.x, dy = ty-q.y, d = Math.sqrt(dx*dx+dy*dy)||1;
           var power = 12.5 + Math.random()*6 + d/70;
           q.vx = dx/d*power; q.vy = dy/d*power;
           sShoot(0.25);
-          if (Math.random() < 0.10) aiTimer = Math.min(aiTimer, 16); // occasional burst follow-up shot
+          if (Math.random() < 0.09) aiTimer = Math.min(aiTimer, 16); // occasional burst follow-up shot (9% at 90% toughness)
         }
       }
     }
