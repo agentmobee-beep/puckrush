@@ -684,10 +684,27 @@
     pid = localStorage.getItem('pr_pid') || '';
     if(!pid){ pid = 'p-' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36); localStorage.setItem('pr_pid', pid); }
   }catch(e){}
+  // Default display name: a tag built from the player's own device id, so
+  // every player is unique on the leaderboard. (The old default was a
+  // random 100-999 number, which collided - two different players could
+  // both be "Player 158".) Old auto-generated "Player NNN" names are
+  // migrated to the new tag; a name the player typed themselves is kept.
+  function defaultName(){
+    var code = (pid || 'anon').replace(/[^a-z0-9]/gi, '').slice(0, 6).toUpperCase();
+    while(code.length < 4) code += 'X';
+    return 'Player ' + code.slice(0, 4) + '-' + code.slice(4, 6);
+  }
   var pname = 'Player';
   try{
     pname = localStorage.getItem('pr_name') || '';
-    if(!pname){ pname = 'Player ' + Math.floor(100 + Math.random()*900); localStorage.setItem('pr_name', pname); }
+    var auto = localStorage.getItem('pr_name_auto');
+    if(!pname){
+      pname = defaultName();
+      localStorage.setItem('pr_name', pname); localStorage.setItem('pr_name_auto', '1');
+    } else if(auto !== '0' && /^Player \d{3}$/.test(pname)){
+      pname = defaultName(); // migrate an old colliding auto-default
+      localStorage.setItem('pr_name', pname); localStorage.setItem('pr_name_auto', '1');
+    }
   }catch(e){}
   var stats = { games:0, wins:0, bestMs:0, streak:0, cur:0 };
   try{ var sv = JSON.parse(localStorage.getItem('pr_stats') || 'null'); if(sv) stats = sv; }catch(e){}
@@ -950,7 +967,7 @@
   $('tab-board').addEventListener('click', function(){ showTab('board'); renderBoard(); });
   $('btn-name').addEventListener('click', function(){
     var v = $('inp-name').value.trim().slice(0, 20);
-    if(v){ pname = v; try{ localStorage.setItem('pr_name', pname); }catch(e){} }
+    if(v){ pname = v; try{ localStorage.setItem('pr_name', pname); localStorage.setItem('pr_name_auto', '0'); }catch(e){} }
     $('inp-name').value = pname;
     $('btn-name').textContent = 'Saved ✓';
     setTimeout(function(){ $('btn-name').textContent = 'Save'; }, 1200);
