@@ -248,6 +248,7 @@
 (function(){
   "use strict";
   var W = 720, H = 1040, MID = H/2, WALL = 16, GATE = 152, R = 29;
+  var ALI_UNTIL = Date.parse('2026-11-08T14:24:00Z'); // 'ALI' puck label: 1 hour only (Anne, 8 Nov)
   var cv = document.getElementById('game'), ctx = cv.getContext('2d');
   var hudAI = document.getElementById('hud-ai'), hudYou = document.getElementById('hud-you'), hudTime = document.getElementById('hud-time');
   // Named opponents: every match is presented as a game against a person.
@@ -393,7 +394,7 @@
     pucks = [];
     var xs = [110, 250, 390, 530, 640];
     for (var i=0;i<5;i++){
-      pucks.push({x:xs[i], y:MID+150+ (i%2)*120, vx:0, vy:0, side:'you'});
+      pucks.push({x:xs[i], y:MID+150+ (i%2)*120, vx:0, vy:0, side:'you', tag:(i===2 ? 'ALI' : '')});
       pucks.push({x:xs[(i+2)%5], y:MID-150-(i%2)*120, vx:0, vy:0, side:'ai'});
     }
     elapsed = 0; shots = 0; over = false;
@@ -567,8 +568,15 @@
       ctx.fillStyle = rg;
       ctx.beginPath(); ctx.arc(q.x,q.y,R,0,7); ctx.fill();
       ctx.strokeStyle = 'rgba(0,0,0,0.35)'; ctx.lineWidth=2; ctx.stroke();
-      ctx.fillStyle = 'rgba(255,255,255,0.85)';
-      ctx.beginPath(); ctx.arc(q.x,q.y,7,0,7); ctx.fill();
+      if (q.tag && Date.now() < ALI_UNTIL){
+        // Temporary (1-hour) name label on one puck - self-expires.
+        ctx.fillStyle = '#ffffff'; ctx.font = '800 16px system-ui';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(q.tag, q.x, q.y + 1); ctx.textBaseline = 'alphabetic';
+      } else {
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.beginPath(); ctx.arc(q.x,q.y,7,0,7); ctx.fill();
+      }
     }
     // confetti
     for (var ci=0; ci<parts.length; ci++){
